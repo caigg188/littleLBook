@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LinuxDo 小红书风格
 // @namespace    http://tampermonkey.net/
-// @version      2.1
+// @version      2.2
 // @license      MIT
 // @description  将LinuxDo改造成小红书风格瀑布流布局，支持自定义主题色
 // @author       JackyLiii
@@ -14,11 +14,222 @@
 // @grant        GM_addStyle
 // @grant        GM_setValue
 // @grant        GM_getValue
-// @run-at       document-idle
+// @run-at       document-start
 // ==/UserScript==
 
 (function() {
     'use strict';
+
+    /* ============================================
+     * 早期样式注入（防止闪烁）
+     * ============================================ */
+    const EarlyStyles = {
+        injected: false,
+        styleId: 'xhs-early-styles',
+
+        inject() {
+            if (this.injected) return;
+            this.injected = true;
+
+            // 尝试从存储读取配置判断是否启用
+            let enabled = true;
+            try {
+                const saved = localStorage.getItem('xhs_enabled_cache');
+                if (saved !== null) enabled = saved === 'true';
+            } catch {}
+
+            if (!enabled) return;
+
+            // 立即注入关键样式，隐藏原始列表 + 预加载卡片样式
+            const css = `
+                /* 早期隐藏原始列表，防止闪烁 */
+                body.xhs-early .topic-list,
+                body.xhs-early .topic-list-header {
+                    opacity: 0 !important;
+                    pointer-events: none !important;
+                    position: absolute !important;
+                    visibility: hidden !important;
+                }
+                /* 预设背景色 */
+                body.xhs-early {
+                    background: #f5f5f7 !important;
+                }
+
+                /* ===== 预加载卡片核心样式，避免闪烁 ===== */
+                /* 文字特效 - 必须早期加载 */
+                .xhs-hl {
+                    display: inline;
+                    padding: 2px 6px;
+                    margin: 0 1px;
+                    border-radius: 4px;
+                    font-weight: 700;
+                }
+                .xhs-ul {
+                    text-decoration: underline;
+                    text-decoration-thickness: 2px;
+                    text-underline-offset: 3px;
+                    font-weight: 600;
+                }
+                .xhs-dot {
+                    position: relative;
+                }
+                .xhs-dot::after {
+                    content: '•';
+                    position: absolute;
+                    bottom: -8px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    font-size: 8px;
+                }
+                .xhs-bd {
+                    font-weight: 700;
+                }
+
+                /* 卡片配色 - 必须早期加载 */
+                .xhs-card-bg.s1 { background: #FFF5F5; color: #4A2C2C; }
+                .xhs-card-bg.s1 .xhs-hl { background: #FED7D7; color: #C53030; }
+                .xhs-card-bg.s1 .xhs-ul { text-decoration-color: #FC8181; }
+                .xhs-card-bg.s1 .xhs-deco { color: #FEB2B2; }
+
+                .xhs-card-bg.s2 { background: #EBF8FF; color: #2A4365; }
+                .xhs-card-bg.s2 .xhs-hl { background: #BEE3F8; color: #2B6CB0; }
+                .xhs-card-bg.s2 .xhs-ul { text-decoration-color: #63B3ED; }
+                .xhs-card-bg.s2 .xhs-deco { color: #90CDF4; }
+
+                .xhs-card-bg.s3 { background: #F0FFF4; color: #22543D; }
+                .xhs-card-bg.s3 .xhs-hl { background: #C6F6D5; color: #276749; }
+                .xhs-card-bg.s3 .xhs-ul { text-decoration-color: #68D391; }
+                .xhs-card-bg.s3 .xhs-deco { color: #9AE6B4; }
+
+                .xhs-card-bg.s4 { background: #FAF5FF; color: #44337A; }
+                .xhs-card-bg.s4 .xhs-hl { background: #E9D8FD; color: #6B46C1; }
+                .xhs-card-bg.s4 .xhs-ul { text-decoration-color: #B794F4; }
+                .xhs-card-bg.s4 .xhs-deco { color: #D6BCFA; }
+
+                .xhs-card-bg.s5 { background: #FFFAF0; color: #744210; }
+                .xhs-card-bg.s5 .xhs-hl { background: #FEEBC8; color: #C05621; }
+                .xhs-card-bg.s5 .xhs-ul { text-decoration-color: #F6AD55; }
+                .xhs-card-bg.s5 .xhs-deco { color: #FBD38D; }
+
+                .xhs-card-bg.s6 { background: #E6FFFA; color: #234E52; }
+                .xhs-card-bg.s6 .xhs-hl { background: #B2F5EA; color: #319795; }
+                .xhs-card-bg.s6 .xhs-ul { text-decoration-color: #4FD1C5; }
+                .xhs-card-bg.s6 .xhs-deco { color: #81E6D9; }
+
+                .xhs-card-bg.s7 { background: #FFFFF0; color: #5F370E; }
+                .xhs-card-bg.s7 .xhs-hl { background: #FAF089; color: #B7791F; }
+                .xhs-card-bg.s7 .xhs-ul { text-decoration-color: #ECC94B; }
+                .xhs-card-bg.s7 .xhs-deco { color: #F6E05E; }
+
+                .xhs-card-bg.s8 { background: #FFF5F7; color: #521B41; }
+                .xhs-card-bg.s8 .xhs-hl { background: #FED7E2; color: #B83280; }
+                .xhs-card-bg.s8 .xhs-ul { text-decoration-color: #F687B3; }
+                .xhs-card-bg.s8 .xhs-deco { color: #FBB6CE; }
+
+                .xhs-card-bg.s9 { background: #EDFDFD; color: #1D4044; }
+                .xhs-card-bg.s9 .xhs-hl { background: #C4F1F9; color: #0987A0; }
+                .xhs-card-bg.s9 .xhs-ul { text-decoration-color: #76E4F7; }
+                .xhs-card-bg.s9 .xhs-deco { color: #9DECF9; }
+
+                .xhs-card-bg.s10 { background: #FFF8F1; color: #63351D; }
+                .xhs-card-bg.s10 .xhs-hl { background: #FFE4CA; color: #C4540A; }
+                .xhs-card-bg.s10 .xhs-ul { text-decoration-color: #FF9F5A; }
+                .xhs-card-bg.s10 .xhs-deco { color: #FFBD8A; }
+
+                /* 装饰元素 */
+                .xhs-deco {
+                    position: absolute;
+                    pointer-events: none;
+                    line-height: 1;
+                }
+                .xhs-deco.corner { font-size: 16px; opacity: 0.5; }
+                .xhs-deco.tl { top: 12px; left: 12px; }
+                .xhs-deco.tr { top: 12px; right: 12px; }
+                .xhs-deco.bl { bottom: 12px; left: 12px; }
+                .xhs-deco.br { bottom: 12px; right: 12px; }
+                .xhs-deco.line { font-size: 8px; letter-spacing: 4px; opacity: 0.25; }
+                .xhs-deco.line-t { top: 6px; left: 50%; transform: translateX(-50%); }
+                .xhs-deco.line-b { bottom: 6px; left: 50%; transform: translateX(-50%); }
+
+                /* 卡片基础样式 */
+                .xhs-card {
+                    break-inside: avoid;
+                    background: #fff;
+                    border-radius: 14px;
+                    overflow: hidden;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+                    margin-bottom: 16px;
+                    contain: layout style paint;
+                }
+                .xhs-card-bg {
+                    position: relative;
+                    padding: 24px 18px;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    align-items: flex-start;
+                    text-align: left;
+                    overflow: hidden;
+                }
+                .xhs-card-bg.size-normal { min-height: 180px; }
+                .xhs-card-bg.size-tall { min-height: 240px; }
+                .xhs-card-emoji { font-size: 32px; margin-bottom: 12px; position: relative; z-index: 1; }
+                .xhs-card-excerpt {
+                    font-size: 14px;
+                    line-height: 2;
+                    font-weight: 500;
+                    word-break: break-word;
+                    position: relative;
+                    z-index: 1;
+                    max-width: 100%;
+                    display: -webkit-box;
+                    -webkit-line-clamp: 4;
+                    -webkit-box-orient: vertical;
+                    overflow: hidden;
+                }
+            `;
+
+            const style = document.createElement('style');
+            style.id = this.styleId;
+            style.textContent = css;
+
+            // 尽早插入
+            if (document.head) {
+                document.head.appendChild(style);
+            } else if (document.documentElement) {
+                document.documentElement.appendChild(style);
+            }
+
+            // 立即添加 body class（如果 body 存在）
+            if (document.body) {
+                document.body.classList.add('xhs-early');
+            } else {
+                // 监听 body 创建
+                const observer = new MutationObserver(() => {
+                    if (document.body) {
+                        document.body.classList.add('xhs-early');
+                        observer.disconnect();
+                    }
+                });
+                observer.observe(document.documentElement, { childList: true });
+            }
+        },
+
+        remove() {
+            document.getElementById(this.styleId)?.remove();
+            document.body?.classList.remove('xhs-early');
+        },
+
+        // 缓存启用状态到 localStorage 供下次早期读取
+        cacheEnabled(enabled) {
+            try {
+                localStorage.setItem('xhs_enabled_cache', String(enabled));
+            } catch {}
+        }
+    };
+
+    // 立即执行早期样式注入
+    EarlyStyles.inject();
 
     /* ============================================
      * 配置模块
@@ -948,7 +1159,7 @@
                     <div class="xhs-panel-title">
                         <span>📕</span>
                         <span>小红书模式</span>
-                        <span class="xhs-panel-ver">v2.1</span>
+                        <span class="xhs-panel-ver">v2.2</span>
                     </div>
                     <div class="xhs-panel-close">×</div>
                 </div>
@@ -1073,7 +1284,7 @@
         observer: null,
         loadQueue: [],
         isLoading: false,
-        concurrency: 3,
+        concurrency: 6,
 
         styles: ['s1','s2','s3','s4','s5','s6','s7','s8','s9','s10'],
 
@@ -1107,7 +1318,7 @@
                         }
                     }
                 });
-            }, { rootMargin: '200px', threshold: 0.01 });
+            }, { rootMargin: '400px 0px', threshold: 0.01 });
         },
 
         _queueLoad(card, tid) {
@@ -1362,10 +1573,21 @@
                     // 预加载图片
                     const tempImg = new Image();
                     tempImg.onload = () => {
-                        bgEl.style.display = 'none';
-                        imgBox.style.display = 'block';
-                        img.src = data.images[0];
-                        requestAnimationFrame(() => img.classList.add('show'));
+                        // 使用 RAF 确保平滑过渡
+                        requestAnimationFrame(() => {
+                            img.src = data.images[0];
+                            // 等待图片实际渲染后再切换
+                            img.onload = () => {
+                                bgEl.style.cssText = 'display:none!important';
+                                imgBox.style.cssText = 'display:block';
+                                // 双重 RAF 确保渲染完成
+                                requestAnimationFrame(() => {
+                                    requestAnimationFrame(() => {
+                                        img.classList.add('show');
+                                    });
+                                });
+                            };
+                        });
                     };
                     tempImg.onerror = () => {
                         // 图片加载失败，保持文字封面
@@ -1417,14 +1639,20 @@
         apply() {
             const config = Config.get();
 
+            // 缓存启用状态供下次早期加载使用
+            EarlyStyles.cacheEnabled(config.enabled);
+
             if (config.enabled) {
                 document.body.classList.add('xhs-on');
                 Styles.injectTheme();
                 Grid.render();
+                // 移除早期样式（已被正式样式覆盖）
+                EarlyStyles.remove();
             } else {
                 document.body.classList.remove('xhs-on', 'xhs-topic');
                 Styles.removeTheme();
                 Grid.reset();
+                EarlyStyles.remove();
             }
 
             this._updateTopicClass();
@@ -1462,14 +1690,30 @@
     /* ============================================
      * 启动
      * ============================================ */
+    const initWhenReady = () => {
+        // 确保关键 DOM 元素存在
+        if (document.body && document.querySelector('.d-header-icons')) {
+            App.init();
+        } else {
+            // 等待 DOM 完全加载
+            requestAnimationFrame(initWhenReady);
+        }
+    };
+
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => App.init());
+        document.addEventListener('DOMContentLoaded', initWhenReady);
+    } else if (document.readyState === 'interactive') {
+        initWhenReady();
     } else {
-        App.init();
+        // complete 状态直接初始化
+        initWhenReady();
     }
 
+    // 备用：确保初始化完成
     setTimeout(() => {
-        if (Config.get().enabled && !Grid.container) Grid.render();
-    }, 1200);
+        if (Config.get().enabled && !Grid.container) {
+            Grid.render();
+        }
+    }, 800);
 
 })();
