@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         LinuxDo 小红书风格
+// @name         小L书——LinuxDo仿小红书主题
 // @namespace    http://tampermonkey.net/
 // @version      2.3
 // @license      MIT
