@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         小L书——LinuxDo仿小红书主题
+// @name         小L书——LinuxDo仿小红书主题-适配暗色
 // @namespace    http://tampermonkey.net/
 // @version      2.4
 // @license      MIT
@@ -17,7 +17,7 @@
 // @run-at       document-start
 // ==/UserScript==
 
-(function() {
+(function () {
     'use strict';
 
     /* ============================================
@@ -26,6 +26,29 @@
     const EarlyStyles = {
         injected: false,
         styleId: 'xhs-early-styles',
+
+        // 早期检测暗色模式
+        _detectDarkEarly() {
+            // 读取缓存的用户设置
+            let darkMode = 'auto';
+            try {
+                const saved = localStorage.getItem('xhs_darkmode_cache');
+                if (saved) darkMode = saved;
+            } catch { }
+
+            if (darkMode === 'dark') return true;
+            if (darkMode === 'light') return false;
+
+            // auto 模式：检测系统/扩展
+            if (document.documentElement.hasAttribute('data-darkreader-scheme')) {
+                return document.documentElement.getAttribute('data-darkreader-scheme') === 'dark';
+            }
+            if (document.documentElement.classList.contains('dark') ||
+                document.documentElement.getAttribute('data-theme') === 'dark') {
+                return true;
+            }
+            return window.matchMedia?.('(prefers-color-scheme: dark)').matches || false;
+        },
 
         inject() {
             if (this.injected) return;
@@ -36,9 +59,11 @@
             try {
                 const saved = localStorage.getItem('xhs_enabled_cache');
                 if (saved !== null) enabled = saved === 'true';
-            } catch {}
+            } catch { }
 
             if (!enabled) return;
+
+            const isDark = this._detectDarkEarly();
 
             // 立即注入关键样式，隐藏原始列表 + 预加载卡片样式
             const css = `
@@ -52,50 +77,93 @@
                 }
                 /* 预设背景色 */
                 body.xhs-early {
-                    background: #f5f5f7 !important;
+                    background: ${isDark ? '#1a1a1a' : '#f5f5f7'} !important;
                 }
 
                 /* ===== 预加载卡片核心样式，避免闪烁 ===== */
-                /* 文字特效 - 小红书风格花字 */
+                /* 文字特效 - 必须早期加载 */
                 .xhs-hl {
-                    background: linear-gradient(to top, var(--hl-color, rgba(255,220,100,0.5)) 70%, transparent 70%);
-                    padding: 0 2px;
-                    font-weight: 600;
+                    display: inline;
+                    padding: 2px 6px;
+                    margin: 0 1px;
+                    border-radius: 4px;
+                    font-weight: 700;
                 }
                 .xhs-ul {
                     text-decoration: underline;
-                    text-decoration-color: var(--ul-color, currentColor);
                     text-decoration-thickness: 2px;
-                    text-underline-offset: 2px;
-                    font-weight: 500;
-                }
-                .xhs-wave {
-                    text-decoration: underline wavy;
-                    text-decoration-color: var(--ul-color, currentColor);
-                    text-decoration-thickness: 1.5px;
                     text-underline-offset: 3px;
+                    font-weight: 600;
                 }
                 .xhs-dot {
                     position: relative;
-                    font-weight: 600;
                 }
                 .xhs-dot::after {
-                    content: '';
+                    content: '•';
                     position: absolute;
-                    bottom: -3px;
+                    bottom: -8px;
                     left: 50%;
                     transform: translateX(-50%);
-                    width: 4px;
-                    height: 4px;
-                    border-radius: 50%;
-                    background: currentColor;
-                    opacity: 0.6;
+                    font-size: 8px;
                 }
                 .xhs-bd {
                     font-weight: 700;
                 }
 
                 /* 卡片配色 - 必须早期加载 */
+                ${isDark ? `
+                /* 暗色模式卡片配色 */
+                .xhs-card-bg.s1 { background: #3D2222; color: #F5C6C6; }
+                .xhs-card-bg.s1 .xhs-hl { background: #5C2828; color: #FC8181; }
+                .xhs-card-bg.s1 .xhs-ul { text-decoration-color: #FC8181; }
+                .xhs-card-bg.s1 .xhs-deco { color: #7C3030; }
+
+                .xhs-card-bg.s2 { background: #1E3A5F; color: #BEE3F8; }
+                .xhs-card-bg.s2 .xhs-hl { background: #2A4A6F; color: #90CDF4; }
+                .xhs-card-bg.s2 .xhs-ul { text-decoration-color: #63B3ED; }
+                .xhs-card-bg.s2 .xhs-deco { color: #4A79A8; }
+
+                .xhs-card-bg.s3 { background: #1C3D2D; color: #C6F6D5; }
+                .xhs-card-bg.s3 .xhs-hl { background: #264D3D; color: #9AE6B4; }
+                .xhs-card-bg.s3 .xhs-ul { text-decoration-color: #68D391; }
+                .xhs-card-bg.s3 .xhs-deco { color: #48BB78; }
+
+                .xhs-card-bg.s4 { background: #2D2248; color: #E9D8FD; }
+                .xhs-card-bg.s4 .xhs-hl { background: #3D3258; color: #D6BCFA; }
+                .xhs-card-bg.s4 .xhs-ul { text-decoration-color: #B794F4; }
+                .xhs-card-bg.s4 .xhs-deco { color: #9F7AEA; }
+
+                .xhs-card-bg.s5 { background: #3D3020; color: #FEEBC8; }
+                .xhs-card-bg.s5 .xhs-hl { background: #4D4030; color: #FBD38D; }
+                .xhs-card-bg.s5 .xhs-ul { text-decoration-color: #F6AD55; }
+                .xhs-card-bg.s5 .xhs-deco { color: #ED8936; }
+
+                .xhs-card-bg.s6 { background: #1A3D3D; color: #B2F5EA; }
+                .xhs-card-bg.s6 .xhs-hl { background: #2A4D4D; color: #81E6D9; }
+                .xhs-card-bg.s6 .xhs-ul { text-decoration-color: #4FD1C5; }
+                .xhs-card-bg.s6 .xhs-deco { color: #38B2AC; }
+
+                .xhs-card-bg.s7 { background: #3D3D1A; color: #FAF089; }
+                .xhs-card-bg.s7 .xhs-hl { background: #4D4D2A; color: #F6E05E; }
+                .xhs-card-bg.s7 .xhs-ul { text-decoration-color: #ECC94B; }
+                .xhs-card-bg.s7 .xhs-deco { color: #D69E2E; }
+
+                .xhs-card-bg.s8 { background: #3D1A2D; color: #FED7E2; }
+                .xhs-card-bg.s8 .xhs-hl { background: #4D2A3D; color: #FBB6CE; }
+                .xhs-card-bg.s8 .xhs-ul { text-decoration-color: #F687B3; }
+                .xhs-card-bg.s8 .xhs-deco { color: #ED64A6; }
+
+                .xhs-card-bg.s9 { background: #1A3A3D; color: #C4F1F9; }
+                .xhs-card-bg.s9 .xhs-hl { background: #2A4A4D; color: #9DECF9; }
+                .xhs-card-bg.s9 .xhs-ul { text-decoration-color: #76E4F7; }
+                .xhs-card-bg.s9 .xhs-deco { color: #0BC5EA; }
+
+                .xhs-card-bg.s10 { background: #3D2A1A; color: #FFE4CA; }
+                .xhs-card-bg.s10 .xhs-hl { background: #4D3A2A; color: #FFBD8A; }
+                .xhs-card-bg.s10 .xhs-ul { text-decoration-color: #FF9F5A; }
+                .xhs-card-bg.s10 .xhs-deco { color: #ED8936; }
+                ` : `
+                /* 亮色模式卡片配色 */
                 .xhs-card-bg.s1 { background: #FFF5F5; color: #4A2C2C; }
                 .xhs-card-bg.s1 .xhs-hl { background: #FED7D7; color: #C53030; }
                 .xhs-card-bg.s1 .xhs-ul { text-decoration-color: #FC8181; }
@@ -145,6 +213,7 @@
                 .xhs-card-bg.s10 .xhs-hl { background: #FFE4CA; color: #C4540A; }
                 .xhs-card-bg.s10 .xhs-ul { text-decoration-color: #FF9F5A; }
                 .xhs-card-bg.s10 .xhs-deco { color: #FFBD8A; }
+                `}
 
                 /* 装饰元素 */
                 .xhs-deco {
@@ -164,10 +233,10 @@
                 /* 卡片基础样式 */
                 .xhs-card {
                     break-inside: avoid;
-                    background: #fff;
+                    background: ${isDark ? '#2d2d2d' : '#fff'};
                     border-radius: 14px;
                     overflow: hidden;
-                    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+                    box-shadow: 0 2px 8px ${isDark ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.04)'};
                     margin-bottom: 16px;
                     contain: layout style paint;
                 }
@@ -195,7 +264,6 @@
                     display: -webkit-box;
                     -webkit-line-clamp: 4;
                     -webkit-box-orient: vertical;
-                    overflow: hidden;
                 }
             `;
 
@@ -234,7 +302,14 @@
         cacheEnabled(enabled) {
             try {
                 localStorage.setItem('xhs_enabled_cache', String(enabled));
-            } catch {}
+            } catch { }
+        },
+
+        // 缓存暗色模式设置供下次早期读取
+        cacheDarkMode(mode) {
+            try {
+                localStorage.setItem('xhs_darkmode_cache', mode);
+            } catch { }
         }
     };
 
@@ -250,7 +325,8 @@
         defaults: {
             enabled: true,
             themeColor: '#ff2442',
-            showStats: true
+            showStats: true,
+            darkMode: 'auto' // 'auto' | 'light' | 'dark'
         },
 
         themes: {
@@ -314,7 +390,7 @@
 
         debounce(fn, delay) {
             let timer = null;
-            return function(...args) {
+            return function (...args) {
                 clearTimeout(timer);
                 timer = setTimeout(() => fn.apply(this, args), delay);
             };
@@ -322,6 +398,32 @@
 
         isTopicPage: () => /\/t\/[^/]+\/\d+/.test(location.pathname),
         isListPage: () => !!document.querySelector('tbody.topic-list-body'),
+
+        // 检测系统是否为暗色模式
+        detectSystemDark() {
+            // 1. 检测 Dark Reader 扩展
+            if (document.documentElement.hasAttribute('data-darkreader-scheme')) {
+                return document.documentElement.getAttribute('data-darkreader-scheme') === 'dark';
+            }
+            // 2. 检测常见的暗色模式 class/属性
+            if (document.documentElement.classList.contains('dark') ||
+                document.body?.classList.contains('dark') ||
+                document.documentElement.getAttribute('data-theme') === 'dark' ||
+                document.body?.getAttribute('data-theme') === 'dark') {
+                return true;
+            }
+            // 3. 检测系统偏好
+            return window.matchMedia?.('(prefers-color-scheme: dark)').matches || false;
+        },
+
+        // 根据配置判断是否应该使用暗色模式
+        isDarkMode() {
+            const config = Config.get();
+            if (config.darkMode === 'dark') return true;
+            if (config.darkMode === 'light') return false;
+            // auto 模式：跟随系统
+            return this.detectSystemDark();
+        },
 
         escapeHtml(str) {
             const div = document.createElement('div');
@@ -582,6 +684,20 @@
                 .xhs-footer-author a:hover { text-decoration: underline; }
                 .xhs-reset { font-size: 11px; color: #ff2442; cursor: pointer; padding: 4px 8px; border-radius: 6px; transition: background 0.15s; }
                 .xhs-reset:hover { background: rgba(255,36,66,0.1); }
+
+                .xhs-select {
+                    padding: 6px 12px;
+                    border-radius: 8px;
+                    border: 1px solid #ddd;
+                    background: #fff;
+                    font-size: 12px;
+                    color: #333;
+                    cursor: pointer;
+                    outline: none;
+                    transition: border-color 0.2s;
+                }
+                .xhs-select:hover { border-color: #ff2442; }
+                .xhs-select:focus { border-color: #ff2442; box-shadow: 0 0 0 2px rgba(255,36,66,0.1); }
             `);
         },
 
@@ -594,20 +710,32 @@
             const c = config.themeColor;
             const rgb = Utils.hexToRgb(c);
             const lighter = Utils.adjustColor(c, 15);
+            const isDark = Utils.isDarkMode();
+
+            // 添加/移除 dark class 以便其他样式识别
+            document.body.classList.toggle('xhs-dark', isDark);
 
             const css = `
                 :root {
                     --xhs-c: ${c};
                     --xhs-rgb: ${rgb};
-                    --xhs-light: rgba(${rgb}, 0.1);
+                    --xhs-light: rgba(${rgb}, ${isDark ? '0.15' : '0.1'});
                     --xhs-lighter: ${lighter};
+                    --xhs-bg: ${isDark ? '#1a1a1a' : '#f5f5f7'};
+                    --xhs-card-bg: ${isDark ? '#2d2d2d' : '#fff'};
+                    --xhs-text: ${isDark ? '#e0e0e0' : '#222'};
+                    --xhs-text-secondary: ${isDark ? '#aaa' : '#666'};
+                    --xhs-text-muted: ${isDark ? '#888' : '#999'};
+                    --xhs-border: ${isDark ? '#404040' : '#f0f0f0'};
+                    --xhs-shadow: ${isDark ? 'rgba(0,0,0,0.4)' : 'rgba(0,0,0,0.04)'};
+                    --xhs-shadow-hover: ${isDark ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.08)'};
                 }
 
-                body.xhs-on { background: #f5f5f7 !important; }
+                body.xhs-on { background: var(--xhs-bg) !important; }
 
                 body.xhs-on .d-header {
-                    background: #fff !important;
-                    box-shadow: 0 1px 0 var(--xhs-c), 0 2px 12px rgba(0,0,0,0.04) !important;
+                    background: ${isDark ? '#1e1e1e' : '#fff'} !important;
+                    box-shadow: 0 1px 0 var(--xhs-c), 0 2px 12px var(--xhs-shadow) !important;
                     border: none !important;
                 }
 
@@ -646,7 +774,7 @@
                 body.xhs-on .badge-notification.new-topic,
                 body.xhs-on .badge-notification.unread-posts { background: var(--xhs-c) !important; }
 
-                body.xhs-on .sidebar-wrapper { background: #fff !important; }
+                body.xhs-on .sidebar-wrapper { background: ${isDark ? '#252525' : '#fff'} !important; }
 
                 body.xhs-on .sidebar-section-link {
                     border-radius: 10px !important;
@@ -672,35 +800,36 @@
                 body.xhs-on .topic-list,
                 body.xhs-on .topic-list-header { display: none !important; }
 
-                /* ===== 瀑布流 ===== */
+                /* ===== 卡片网格布局 ===== */
                 .xhs-grid {
-                    column-count: 4;
-                    column-gap: 16px;
+                    display: grid;
+                    grid-template-columns: repeat(4, 1fr);
+                    gap: 16px;
                     padding: 16px 0;
                 }
-                @media (max-width: 1400px) { .xhs-grid { column-count: 4; } }
-                @media (max-width: 1200px) { .xhs-grid { column-count: 3; } }
-                @media (max-width: 900px) { .xhs-grid { column-count: 2; column-gap: 12px; } }
-                @media (max-width: 520px) { .xhs-grid { column-count: 2; column-gap: 10px; } }
+                @media (max-width: 1400px) { .xhs-grid { grid-template-columns: repeat(4, 1fr); } }
+                @media (max-width: 1200px) { .xhs-grid { grid-template-columns: repeat(3, 1fr); } }
+                @media (max-width: 900px) { .xhs-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; } }
+                @media (max-width: 520px) { .xhs-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; } }
 
                 /* ===== 卡片 ===== */
                 .xhs-card {
-                    break-inside: avoid;
-                    background: #fff;
+                    display: flex;
+                    flex-direction: column;
+                    background: var(--xhs-card-bg);
                     border-radius: 14px;
                     overflow: hidden;
-                    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+                    box-shadow: 0 2px 8px var(--xhs-shadow);
                     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s;
-                    margin-bottom: 16px;
                     will-change: transform;
                     contain: layout style paint;
                 }
-                @media (max-width: 900px) { .xhs-card { margin-bottom: 12px; border-radius: 12px; } }
-                @media (max-width: 520px) { .xhs-card { margin-bottom: 10px; border-radius: 10px; } }
+                @media (max-width: 900px) { .xhs-card { border-radius: 12px; } }
+                @media (max-width: 520px) { .xhs-card { border-radius: 10px; } }
 
                 .xhs-card:hover {
                     transform: translateY(-6px);
-                    box-shadow: 0 12px 32px rgba(var(--xhs-rgb), 0.12);
+                    box-shadow: 0 12px 32px ${isDark ? 'rgba(var(--xhs-rgb), 0.25)' : 'rgba(var(--xhs-rgb), 0.12)'};
                 }
 
                 .xhs-card-cover {
@@ -720,14 +849,15 @@
                     align-items: flex-start;
                     text-align: left;
                     overflow: hidden;
+                    box-sizing: border-box;
                 }
                 @media (max-width: 520px) { .xhs-card-bg { padding: 18px 14px; } }
 
-                .xhs-card-bg.size-normal { min-height: 180px; }
-                .xhs-card-bg.size-tall { min-height: 240px; }
+                .xhs-card-bg.size-normal { height: 180px; }
+                .xhs-card-bg.size-tall { height: 180px; }
                 @media (max-width: 520px) {
-                    .xhs-card-bg.size-normal { min-height: 150px; }
-                    .xhs-card-bg.size-tall { min-height: 200px; }
+                    .xhs-card-bg.size-normal { height: 150px; }
+                    .xhs-card-bg.size-tall { height: 150px; }
                 }
 
                 /* 手绘装饰 */
@@ -779,93 +909,154 @@
                     display: -webkit-box;
                     -webkit-line-clamp: 4;
                     -webkit-box-orient: vertical;
-                    overflow: hidden;
                 }
                 @media (max-width: 520px) { .xhs-card-excerpt { font-size: 12px; line-height: 1.9; -webkit-line-clamp: 3; } }
 
-                /* 文字效果 - 小红书风格花字 */
+                /* 文字效果 */
                 .xhs-hl {
-                    background: linear-gradient(to top, var(--hl-color, rgba(255,220,100,0.5)) 70%, transparent 70%);
-                    padding: 0 2px;
-                    font-weight: 600;
+                    display: inline;
+                    padding: 2px 6px;
+                    margin: 0 1px;
+                    border-radius: 4px;
+                    font-weight: 700;
                 }
                 .xhs-ul {
                     text-decoration: underline;
-                    text-decoration-color: var(--ul-color, currentColor);
                     text-decoration-thickness: 2px;
-                    text-underline-offset: 2px;
-                    font-weight: 500;
-                }
-                .xhs-wave {
-                    text-decoration: underline wavy;
-                    text-decoration-color: var(--ul-color, currentColor);
-                    text-decoration-thickness: 1.5px;
                     text-underline-offset: 3px;
+                    font-weight: 600;
                 }
                 .xhs-dot {
                     position: relative;
-                    font-weight: 600;
                 }
                 .xhs-dot::after {
-                    content: '';
+                    content: '•';
                     position: absolute;
-                    bottom: -3px;
+                    bottom: -8px;
                     left: 50%;
                     transform: translateX(-50%);
-                    width: 4px;
-                    height: 4px;
-                    border-radius: 50%;
-                    background: currentColor;
-                    opacity: 0.6;
+                    font-size: 8px;
                 }
                 .xhs-bd {
                     font-weight: 700;
                 }
 
-                /* ===== 亮色配色方案 ===== */
-                .xhs-card-bg.s1 { background: #FFF5F5; color: #4A2C2C; --hl-color: rgba(254,178,178,0.5); --ul-color: #FC8181; }
+                /* ===== 卡片配色 (根据暗色/亮色模式自动切换) ===== */
+                ${isDark ? `
+                .xhs-card-bg.s1 { background: #3D2222; color: #F5C6C6; }
+                .xhs-card-bg.s1 .xhs-hl { background: #5C2828; color: #FC8181; }
+                .xhs-card-bg.s1 .xhs-ul { text-decoration-color: #FC8181; }
+                .xhs-card-bg.s1 .xhs-deco { color: #7C3030; }
+
+                .xhs-card-bg.s2 { background: #1E3A5F; color: #BEE3F8; }
+                .xhs-card-bg.s2 .xhs-hl { background: #2A4A6F; color: #90CDF4; }
+                .xhs-card-bg.s2 .xhs-ul { text-decoration-color: #63B3ED; }
+                .xhs-card-bg.s2 .xhs-deco { color: #4A79A8; }
+
+                .xhs-card-bg.s3 { background: #1C3D2D; color: #C6F6D5; }
+                .xhs-card-bg.s3 .xhs-hl { background: #264D3D; color: #9AE6B4; }
+                .xhs-card-bg.s3 .xhs-ul { text-decoration-color: #68D391; }
+                .xhs-card-bg.s3 .xhs-deco { color: #48BB78; }
+
+                .xhs-card-bg.s4 { background: #2D2248; color: #E9D8FD; }
+                .xhs-card-bg.s4 .xhs-hl { background: #3D3258; color: #D6BCFA; }
+                .xhs-card-bg.s4 .xhs-ul { text-decoration-color: #B794F4; }
+                .xhs-card-bg.s4 .xhs-deco { color: #9F7AEA; }
+
+                .xhs-card-bg.s5 { background: #3D3020; color: #FEEBC8; }
+                .xhs-card-bg.s5 .xhs-hl { background: #4D4030; color: #FBD38D; }
+                .xhs-card-bg.s5 .xhs-ul { text-decoration-color: #F6AD55; }
+                .xhs-card-bg.s5 .xhs-deco { color: #ED8936; }
+
+                .xhs-card-bg.s6 { background: #1A3D3D; color: #B2F5EA; }
+                .xhs-card-bg.s6 .xhs-hl { background: #2A4D4D; color: #81E6D9; }
+                .xhs-card-bg.s6 .xhs-ul { text-decoration-color: #4FD1C5; }
+                .xhs-card-bg.s6 .xhs-deco { color: #38B2AC; }
+
+                .xhs-card-bg.s7 { background: #3D3D1A; color: #FAF089; }
+                .xhs-card-bg.s7 .xhs-hl { background: #4D4D2A; color: #F6E05E; }
+                .xhs-card-bg.s7 .xhs-ul { text-decoration-color: #ECC94B; }
+                .xhs-card-bg.s7 .xhs-deco { color: #D69E2E; }
+
+                .xhs-card-bg.s8 { background: #3D1A2D; color: #FED7E2; }
+                .xhs-card-bg.s8 .xhs-hl { background: #4D2A3D; color: #FBB6CE; }
+                .xhs-card-bg.s8 .xhs-ul { text-decoration-color: #F687B3; }
+                .xhs-card-bg.s8 .xhs-deco { color: #ED64A6; }
+
+                .xhs-card-bg.s9 { background: #1A3A3D; color: #C4F1F9; }
+                .xhs-card-bg.s9 .xhs-hl { background: #2A4A4D; color: #9DECF9; }
+                .xhs-card-bg.s9 .xhs-ul { text-decoration-color: #76E4F7; }
+                .xhs-card-bg.s9 .xhs-deco { color: #0BC5EA; }
+
+                .xhs-card-bg.s10 { background: #3D2A1A; color: #FFE4CA; }
+                .xhs-card-bg.s10 .xhs-hl { background: #4D3A2A; color: #FFBD8A; }
+                .xhs-card-bg.s10 .xhs-ul { text-decoration-color: #FF9F5A; }
+                .xhs-card-bg.s10 .xhs-deco { color: #ED8936; }
+                ` : `
+                .xhs-card-bg.s1 { background: #FFF5F5; color: #4A2C2C; }
+                .xhs-card-bg.s1 .xhs-hl { background: #FED7D7; color: #C53030; }
+                .xhs-card-bg.s1 .xhs-ul { text-decoration-color: #FC8181; }
                 .xhs-card-bg.s1 .xhs-deco { color: #FEB2B2; }
 
-                .xhs-card-bg.s2 { background: #EBF8FF; color: #2A4365; --hl-color: rgba(144,205,244,0.5); --ul-color: #63B3ED; }
+                .xhs-card-bg.s2 { background: #EBF8FF; color: #2A4365; }
+                .xhs-card-bg.s2 .xhs-hl { background: #BEE3F8; color: #2B6CB0; }
+                .xhs-card-bg.s2 .xhs-ul { text-decoration-color: #63B3ED; }
                 .xhs-card-bg.s2 .xhs-deco { color: #90CDF4; }
 
-                .xhs-card-bg.s3 { background: #F0FFF4; color: #22543D; --hl-color: rgba(154,230,180,0.5); --ul-color: #68D391; }
+                .xhs-card-bg.s3 { background: #F0FFF4; color: #22543D; }
+                .xhs-card-bg.s3 .xhs-hl { background: #C6F6D5; color: #276749; }
+                .xhs-card-bg.s3 .xhs-ul { text-decoration-color: #68D391; }
                 .xhs-card-bg.s3 .xhs-deco { color: #9AE6B4; }
 
-                .xhs-card-bg.s4 { background: #FAF5FF; color: #44337A; --hl-color: rgba(214,188,250,0.5); --ul-color: #B794F4; }
+                .xhs-card-bg.s4 { background: #FAF5FF; color: #44337A; }
+                .xhs-card-bg.s4 .xhs-hl { background: #E9D8FD; color: #6B46C1; }
+                .xhs-card-bg.s4 .xhs-ul { text-decoration-color: #B794F4; }
                 .xhs-card-bg.s4 .xhs-deco { color: #D6BCFA; }
 
-                .xhs-card-bg.s5 { background: #FFFAF0; color: #744210; --hl-color: rgba(251,211,141,0.5); --ul-color: #F6AD55; }
+                .xhs-card-bg.s5 { background: #FFFAF0; color: #744210; }
+                .xhs-card-bg.s5 .xhs-hl { background: #FEEBC8; color: #C05621; }
+                .xhs-card-bg.s5 .xhs-ul { text-decoration-color: #F6AD55; }
                 .xhs-card-bg.s5 .xhs-deco { color: #FBD38D; }
 
-                .xhs-card-bg.s6 { background: #E6FFFA; color: #234E52; --hl-color: rgba(129,230,217,0.5); --ul-color: #4FD1C5; }
+                .xhs-card-bg.s6 { background: #E6FFFA; color: #234E52; }
+                .xhs-card-bg.s6 .xhs-hl { background: #B2F5EA; color: #319795; }
+                .xhs-card-bg.s6 .xhs-ul { text-decoration-color: #4FD1C5; }
                 .xhs-card-bg.s6 .xhs-deco { color: #81E6D9; }
 
-                .xhs-card-bg.s7 { background: #FFFFF0; color: #5F370E; --hl-color: rgba(246,224,94,0.5); --ul-color: #ECC94B; }
+                .xhs-card-bg.s7 { background: #FFFFF0; color: #5F370E; }
+                .xhs-card-bg.s7 .xhs-hl { background: #FAF089; color: #B7791F; }
+                .xhs-card-bg.s7 .xhs-ul { text-decoration-color: #ECC94B; }
                 .xhs-card-bg.s7 .xhs-deco { color: #F6E05E; }
 
-                .xhs-card-bg.s8 { background: #FFF5F7; color: #521B41; --hl-color: rgba(251,182,206,0.5); --ul-color: #F687B3; }
+                .xhs-card-bg.s8 { background: #FFF5F7; color: #521B41; }
+                .xhs-card-bg.s8 .xhs-hl { background: #FED7E2; color: #B83280; }
+                .xhs-card-bg.s8 .xhs-ul { text-decoration-color: #F687B3; }
                 .xhs-card-bg.s8 .xhs-deco { color: #FBB6CE; }
 
-                .xhs-card-bg.s9 { background: #EDFDFD; color: #1D4044; --hl-color: rgba(157,236,249,0.5); --ul-color: #76E4F7; }
+                .xhs-card-bg.s9 { background: #EDFDFD; color: #1D4044; }
+                .xhs-card-bg.s9 .xhs-hl { background: #C4F1F9; color: #0987A0; }
+                .xhs-card-bg.s9 .xhs-ul { text-decoration-color: #76E4F7; }
                 .xhs-card-bg.s9 .xhs-deco { color: #9DECF9; }
 
-                .xhs-card-bg.s10 { background: #FFF8F1; color: #63351D; --hl-color: rgba(255,189,138,0.5); --ul-color: #FF9F5A; }
+                .xhs-card-bg.s10 { background: #FFF8F1; color: #63351D; }
+                .xhs-card-bg.s10 .xhs-hl { background: #FFE4CA; color: #C4540A; }
+                .xhs-card-bg.s10 .xhs-ul { text-decoration-color: #FF9F5A; }
                 .xhs-card-bg.s10 .xhs-deco { color: #FFBD8A; }
+                `}
 
                 /* ===== 图片封面 ===== */
                 .xhs-card-img-box {
                     position: relative;
                     width: 100%;
                     overflow: hidden;
-                    background: #f0f0f0;
+                    background: ${isDark ? '#3d3d3d' : '#f0f0f0'};
                 }
 
                 .xhs-card-img-box.size-normal { height: 180px; }
-                .xhs-card-img-box.size-tall { height: 240px; }
+                .xhs-card-img-box.size-tall { height: 180px; }
                 @media (max-width: 520px) {
                     .xhs-card-img-box.size-normal { height: 150px; }
-                    .xhs-card-img-box.size-tall { height: 200px; }
+                    .xhs-card-img-box.size-tall { height: 150px; }
                 }
 
                 .xhs-card-img {
@@ -885,8 +1076,8 @@
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    background: linear-gradient(135deg, #f5f5f5, #eee);
-                    color: #ccc;
+                    background: ${isDark ? 'linear-gradient(135deg, #3d3d3d, #2d2d2d)' : 'linear-gradient(135deg, #f5f5f5, #eee)'};
+                    color: ${isDark ? '#666' : '#ccc'};
                     font-size: 24px;
                 }
                 .xhs-card-img.show ~ .xhs-card-img-ph { display: none; }
@@ -895,14 +1086,14 @@
                     position: absolute;
                     top: 10px;
                     left: 10px;
-                    background: rgba(255,255,255,0.95);
+                    background: ${isDark ? 'rgba(45,45,45,0.95)' : 'rgba(255,255,255,0.95)'};
                     color: var(--xhs-c);
                     font-size: 10px;
                     font-weight: 600;
                     padding: 4px 10px;
                     border-radius: 10px;
                     z-index: 2;
-                    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+                    box-shadow: 0 2px 8px ${isDark ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.08)'};
                     backdrop-filter: blur(8px);
                 }
                 @media (max-width: 520px) { .xhs-card-tag { font-size: 9px; padding: 3px 8px; } }
@@ -939,30 +1130,36 @@
                 }
                 .xhs-card-count.show { display: flex; }
 
-                .xhs-card-body { padding: 14px; }
+                .xhs-card-body {
+                    padding: 14px;
+                    display: flex;
+                    flex-direction: column;
+                    flex: 1;
+                }
                 @media (max-width: 520px) { .xhs-card-body { padding: 10px 12px; } }
 
                 .xhs-card-title {
-                    display: block;
+                    display: -webkit-box;
                     font-size: 14px;
                     font-weight: 600;
                     line-height: 1.45;
-                    color: #222;
+                    color: var(--xhs-text);
                     text-decoration: none;
-                    display: -webkit-box;
                     -webkit-line-clamp: 2;
                     -webkit-box-orient: vertical;
                     overflow: hidden;
+                    min-height: 2.9em;
                     margin-bottom: 12px;
                     transition: color 0.15s;
                 }
-                @media (max-width: 520px) { .xhs-card-title { font-size: 13px; margin-bottom: 10px; } }
+                @media (max-width: 520px) { .xhs-card-title { font-size: 13px; margin-bottom: 10px; min-height: 2.9em; } }
                 .xhs-card-title:hover { color: var(--xhs-c); }
 
                 .xhs-card-meta {
                     display: flex;
                     align-items: center;
                     justify-content: space-between;
+                    margin-top: auto;
                 }
                 .xhs-card-author {
                     display: flex;
@@ -983,7 +1180,7 @@
 
                 .xhs-card-name {
                     font-size: 12px;
-                    color: #666;
+                    color: var(--xhs-text-secondary);
                     white-space: nowrap;
                     overflow: hidden;
                     text-overflow: ellipsis;
@@ -995,7 +1192,7 @@
                     align-items: center;
                     gap: 4px;
                     font-size: 12px;
-                    color: #999;
+                    color: var(--xhs-text-muted);
                     padding: 6px 10px;
                     border-radius: 14px;
                     cursor: pointer;
@@ -1019,20 +1216,20 @@
                     gap: 14px;
                     margin-top: 12px;
                     padding-top: 12px;
-                    border-top: 1px solid #f0f0f0;
+                    border-top: 1px solid var(--xhs-border);
                     font-size: 11px;
-                    color: #999;
+                    color: var(--xhs-text-muted);
                 }
                 @media (max-width: 520px) { .xhs-card-stats { gap: 10px; margin-top: 10px; padding-top: 10px; font-size: 10px; } }
 
                 /* ===== 帖子详情页 ===== */
-                body.xhs-on.xhs-topic { background: #f5f5f7 !important; }
+                body.xhs-on.xhs-topic { background: var(--xhs-bg) !important; }
 
                 body.xhs-on.xhs-topic .topic-post {
-                    background: #fff !important;
+                    background: var(--xhs-card-bg) !important;
                     border-radius: 20px !important;
                     margin-bottom: 16px !important;
-                    box-shadow: 0 2px 12px rgba(0,0,0,0.04) !important;
+                    box-shadow: 0 2px 12px var(--xhs-shadow) !important;
                     overflow: hidden !important;
                     border: none !important;
                 }
@@ -1108,6 +1305,14 @@
                 body.xhs-on #reply-control {
                     border-top: 3px solid var(--xhs-c) !important;
                     border-radius: 20px 20px 0 0 !important;
+                    background: var(--xhs-card-bg) !important;
+                    width: 100% !important;
+                    left: 0 !important;
+                    right: 0 !important;
+                }
+                /* 隐藏未激活的回复控件 */
+                body.xhs-on #reply-control.closed {
+                    display: none !important;
                 }
 
                 /* ===== 推荐话题等高网格布局 ===== */
@@ -1189,11 +1394,11 @@
 
                 /* ===== 话题底部按钮小红书风格 ===== */
                 body.xhs-on.xhs-topic .topic-footer-main-buttons {
-                    background: #fff !important;
+                    background: var(--xhs-card-bg) !important;
                     border-radius: 16px !important;
                     padding: 12px 16px !important;
                     margin: 16px 0 !important;
-                    box-shadow: 0 2px 12px rgba(0,0,0,0.04) !important;
+                    box-shadow: 0 2px 12px var(--xhs-shadow) !important;
                     display: flex !important;
                     align-items: center !important;
                     justify-content: space-between !important;
@@ -1316,7 +1521,7 @@
                     <div class="xhs-panel-title">
                         <span>📕</span>
                         <span>小红书模式</span>
-                        <span class="xhs-panel-ver">v2.4</span>
+                        <span class="xhs-panel-ver">v2.3</span>
                     </div>
                     <div class="xhs-panel-close">×</div>
                 </div>
@@ -1342,6 +1547,20 @@
                                 </div>
                             </div>
                             <div class="xhs-switch ${config.showStats ? 'on' : ''}" data-key="showStats"></div>
+                        </div>
+                        <div class="xhs-row">
+                            <div class="xhs-row-info">
+                                <span class="xhs-row-icon">🌙</span>
+                                <div>
+                                    <div class="xhs-row-label">暗色模式</div>
+                                    <div class="xhs-row-desc">适配 Dark Reader 等扩展</div>
+                                </div>
+                            </div>
+                            <select class="xhs-select" data-key="darkMode">
+                                <option value="auto" ${config.darkMode === 'auto' ? 'selected' : ''}>跟随系统</option>
+                                <option value="light" ${config.darkMode === 'light' ? 'selected' : ''}>始终亮色</option>
+                                <option value="dark" ${config.darkMode === 'dark' ? 'selected' : ''}>始终暗色</option>
+                            </select>
                         </div>
                     </div>
                     <div class="xhs-section">
@@ -1406,6 +1625,16 @@
                 Styles.injectTheme();
             };
 
+            // 暗色模式选择
+            this.panel.querySelector('.xhs-select[data-key="darkMode"]').onchange = (e) => {
+                const val = e.target.value;
+                Config.set('darkMode', val);
+                EarlyStyles.cacheDarkMode(val);
+                Styles.injectTheme();
+                Grid.reset();
+                Grid.render();
+            };
+
             this.panel.querySelector('.xhs-reset').onclick = () => {
                 if (confirm('确定重置所有设置？')) {
                     Config.reset();
@@ -1443,35 +1672,19 @@
         isLoading: false,
         concurrency: 6,
 
-        styles: ['s1','s2','s3','s4','s5','s6','s7','s8','s9','s10'],
+        styles: ['s1', 's2', 's3', 's4', 's5', 's6', 's7', 's8', 's9', 's10'],
 
-        // 升级的装饰图案库
         cornerDecos: [
-            // 几何图形
             '╭', '╮', '╰', '╯', '┌', '┐', '└', '┘',
-            '◇', '◆', '△', '▽', '○', '●', '□', '■',
-            // 星星花朵
-            '✦', '✧', '★', '☆', '✩', '✪', '✫', '✬',
-            '✿', '❀', '❁', '✾', '❃', '❋', '✼', '✽',
-            '❄', '❅', '❆', '✲', '✱', '✳', '✴', '✵',
-            // 爱心
-            '♡', '♥', '❤', '💕', '💗', '💖',
-            // 自然元素
-            '🌿', '☘', '🍃', '🌸', '🌺', '🌼', '🌻', '🌷',
-            '🦋', '🐝', '✨', '💫', '⭐', '🌟',
-            // 符号装饰
-            '※', '❈', '❉', '❊', '✺', '✹', '✸', '✷',
+            '•', '◦', '○', '◌', '◍', '◎',
+            '✧', '✦', '◇', '◆', '△', '▽',
+            '✿', '❀', '❁', '✾',
+            '✩', '✪', '✫', '☆',
+            '♡', '♥',
+            '🌿', '☘', '🍃',
         ],
 
-        // 线条装饰字符
-        lineChars: ['·', '•', '◦', '○', '◌', '─', '┄', '┈', '╌', '╍', '∙', '⋅', '⋯', '～', '〰', '≈'],
-
-        // 边框装饰图案
-        borderPatterns: [
-            '✿ ❀ ✿', '★ ☆ ★', '◇ ◆ ◇', '♡ ♥ ♡',
-            '· · ·', '• • •', '○ ○ ○', '◦ ◦ ◦',
-            '〜 〜 〜', '∽ ∽ ∽', '≈ ≈ ≈'
-        ],
+        lineChars: ['·', '•', '◦', '○', '◌', '─', '┄', '┈', '╌', '╍', '∙', '⋅', '⋯'],
 
         emojis: [
             '💻', '🚀', '✨', '💡', '🔥', '📝', '🎯', '📚', '🌟', '💬',
@@ -1536,6 +1749,14 @@
             this.container.appendChild(frag);
         },
 
+        reset() {
+            this.seen.clear();
+            this.index = 0;
+            this.loadQueue = [];
+            this.container?.remove();
+            this.container = null;
+        },
+
         _extract() {
             const topics = [];
             const rows = document.querySelectorAll('tbody.topic-list-body > tr[data-topic-id]');
@@ -1554,8 +1775,8 @@
                 this.seen.add(tid);
 
                 const isLiked = row.classList.contains('liked') ||
-                               row.querySelector('.topic-list-data.liked') !== null ||
-                               row.querySelector('.likes a')?.classList.contains('has-like');
+                    row.querySelector('.topic-list-data.liked') !== null ||
+                    row.querySelector('.likes a')?.classList.contains('has-like');
 
                 topics.push({
                     tid, title, href,
@@ -1573,97 +1794,33 @@
             return topics;
         },
 
-        reset() {
-            this.seen.clear();
-            this.cache.clear(); // 清空缓存
-            this.index = 0;
-            this.loadQueue = [];
-            this.isLoading = false;
-            // 断开所有观察
-            if (this.observer) {
-                this.observer.disconnect();
-            }
-            this.container?.remove();
-            this.container = null;
-        },
-
         _processText(text, seed) {
             const rand = Utils.seededRandom(seed);
+            const segments = text.match(/[\u4e00-\u9fa5]+|[a-zA-Z0-9]+|\s+|[^\u4e00-\u9fa5a-zA-Z0-9\s]+/g) || [text];
 
-            // 分词：中文词组 / 英文单词 / 数字 / 空白 / 标点 / 单个中文字
-            const segments = text.match(/[\u4e00-\u9fa5]{2,}|[a-zA-Z][a-zA-Z0-9]*|[0-9]+|\s+|[^\u4e00-\u9fa5a-zA-Z0-9\s]+|[\u4e00-\u9fa5]/g) || [text];
-
-            // 找出可以加效果的词
-            // 条件：中文2字以上，或英文3字母以上，且不是常见无意义词
-            const skipWords = new Set(['的', '了', '是', '在', '有', '和', '与', '或', '但', '也', '都', '就', '还', '而', '及', 'the', 'and', 'for', 'are', 'but', 'not', 'you', 'all', 'can', 'had', 'her', 'was', 'one', 'our', 'out']);
-
-            const markableIndices = [];
-            segments.forEach((seg, idx) => {
-                const trimmed = seg.trim().toLowerCase();
-                if (skipWords.has(trimmed)) return;
-
-                // 中文至少2个字，英文至少3个字母
-                if (/^[\u4e00-\u9fa5]{2,}$/.test(seg.trim()) || /^[a-zA-Z]{3,}[a-zA-Z0-9]*$/.test(seg.trim())) {
-                    markableIndices.push(idx);
+            const markable = [];
+            segments.forEach((seg, i) => {
+                if (seg.trim().length >= 2 && !/^\s+$/.test(seg) && !/^[^\u4e00-\u9fa5a-zA-Z0-9]+$/.test(seg)) {
+                    markable.push(i);
                 }
             });
 
-            // 如果没有符合条件的词，直接返回
-            if (markableIndices.length === 0) {
-                return Utils.escapeHtml(text);
+            if (markable.length < 2) return Utils.escapeHtml(text);
+
+            const totalMarks = Math.max(1, Math.floor(markable.length * (0.25 + rand() * 0.1)));
+            const shuffled = [...markable].sort(() => rand() - 0.5);
+
+            const effects = new Map();
+            const types = ['hl', 'ul', 'bd', 'dot'];
+
+            for (let i = 0; i < totalMarks && i < shuffled.length; i++) {
+                effects.set(shuffled[i], types[Math.floor(rand() * types.length)]);
             }
 
-            // 标记数量：1-3个词，约30%-50%的可标记词
-            const markCount = Math.max(1, Math.min(3, Math.ceil(markableIndices.length * (0.3 + rand() * 0.2))));
-
-            // 随机打乱并选择
-            const shuffled = [...markableIndices].sort(() => rand() - 0.5);
-            const toMark = shuffled.slice(0, markCount);
-
-            // 效果类型和权重
-            const effects = [
-                { cls: 'xhs-hl', weight: 28 },      // 荧光笔高亮
-                { cls: 'xhs-ul', weight: 22 },      // 下划线
-                { cls: 'xhs-wave', weight: 15 },    // 波浪线
-                { cls: 'xhs-bd', weight: 22 },      // 加粗
-                { cls: 'xhs-dot', weight: 13 }      // 加点
-            ];
-            const totalWeight = effects.reduce((sum, e) => sum + e.weight, 0);
-
-            // 根据权重随机选择效果
-            const pickEffect = () => {
-                let r = rand() * totalWeight;
-                for (const e of effects) {
-                    r -= e.weight;
-                    if (r <= 0) return e.cls;
-                }
-                return effects[0].cls;
-            };
-
-            // 为每个选中的词分配不同的效果，尽量不重复
-            const effectMap = new Map();
-            const usedEffects = new Set();
-
-            toMark.forEach(idx => {
-                let effect;
-                // 尝试选择一个还没用过的效果
-                for (let i = 0; i < 5; i++) {
-                    effect = pickEffect();
-                    if (!usedEffects.has(effect) || usedEffects.size >= effects.length) {
-                        break;
-                    }
-                }
-                usedEffects.add(effect);
-                effectMap.set(idx, effect);
-            });
-
-            // 渲染结果
-            return segments.map((seg, idx) => {
+            return segments.map((seg, i) => {
                 const escaped = Utils.escapeHtml(seg);
-                const effect = effectMap.get(idx);
-                if (effect) {
-                    return `<span class="${effect}">${escaped}</span>`;
-                }
+                const effect = effects.get(i);
+                if (effect) return `<span class="xhs-${effect}">${escaped}</span>`;
                 return escaped;
             }).join('');
         },
@@ -1672,32 +1829,20 @@
             const rand = Utils.seededRandom(seed + '_deco');
             let html = '';
 
-            // 角落装饰 - 提高概率到 85%
-            if (rand() < 0.85) {
-                const corners = ['tl', 'tr', 'bl', 'br'];
-                // 2-4 个角落装饰
-                const cornerCount = 2 + Math.floor(rand() * 3);
-                const selectedCorners = [...corners].sort(() => rand() - 0.5).slice(0, cornerCount);
+            const corners = ['tl', 'tr', 'bl', 'br'];
+            const cornerCount = 1 + Math.floor(rand() * 2);
+            const selectedCorners = [...corners].sort(() => rand() - 0.5).slice(0, cornerCount);
 
-                selectedCorners.forEach(pos => {
-                    const deco = this.cornerDecos[Math.floor(rand() * this.cornerDecos.length)];
-                    html += `<span class="xhs-deco corner ${pos}">${deco}</span>`;
-                });
-            }
+            selectedCorners.forEach(pos => {
+                const deco = this.cornerDecos[Math.floor(rand() * this.cornerDecos.length)];
+                html += `<span class="xhs-deco corner ${pos}">${deco}</span>`;
+            });
 
-            // 线条装饰 - 提高概率到 55%
-            if (rand() < 0.55) {
+            if (rand() < 0.3) {
                 const lineChar = this.lineChars[Math.floor(rand() * this.lineChars.length)];
-                const count = 4 + Math.floor(rand() * 5);
+                const count = 5 + Math.floor(rand() * 4);
                 const pos = rand() > 0.5 ? 'line-t' : 'line-b';
                 html += `<span class="xhs-deco line ${pos}">${lineChar.repeat(count)}</span>`;
-            }
-
-            // 边框图案装饰 - 20% 概率
-            if (rand() < 0.20 && html.indexOf('line') === -1) {
-                const pattern = this.borderPatterns[Math.floor(rand() * this.borderPatterns.length)];
-                const pos = rand() > 0.5 ? 'line-t' : 'line-b';
-                html += `<span class="xhs-deco line ${pos}">${pattern}</span>`;
             }
 
             return html;
@@ -1763,107 +1908,68 @@
         },
 
         async _loadImage(card, tid) {
-            // 检查卡片是否仍在 DOM 中（防止已删除的卡片继续请求）
-            if (!card.isConnected) return;
-
             let data = this.cache.get(tid);
 
             if (!data) {
                 try {
                     const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 8000); // 超时增加到8秒
+                    const timeoutId = setTimeout(() => controller.abort(), 5000);
 
                     const res = await fetch(`/t/topic/${tid}.json`, {
                         signal: controller.signal,
-                        headers: {
-                            'Accept': 'application/json',
-                            'X-Requested-With': 'XMLHttpRequest'
-                        },
-                        credentials: 'same-origin', // 确保携带 cookie
+                        headers: { 'Accept': 'application/json' },
                         priority: 'low'
                     });
 
                     clearTimeout(timeoutId);
-
-                    // 处理各种 HTTP 状态
-                    if (!res.ok) {
-                        if (res.status === 404) {
-                            // 帖子不存在，缓存空数据避免重复请求
-                            this.cache.set(tid, { images: [], likes: 0, liked: false, notFound: true });
-                        } else if (res.status === 429) {
-                            // 请求过快，稍后重试
-                            await new Promise(r => setTimeout(r, 2000));
-                        }
-                        return;
-                    }
+                    if (!res.ok) return;
 
                     const json = await res.json();
 
-                    // 验证返回数据结构
-                    if (!json || typeof json !== 'object') {
-                        console.warn('[XHS] Invalid JSON response for topic', tid);
-                        return;
-                    }
-
                     data = {
                         images: [],
-                        likes: parseInt(json.like_count) || 0,
-                        liked: Boolean(json.current_user_liked)
+                        likes: json.like_count || 0,
+                        liked: json.current_user_liked || false
                     };
 
-                    // 从 post_stream 提取图片
-                    const posts = json.post_stream?.posts;
-                    const firstPost = Array.isArray(posts) && posts.length > 0 ? posts[0] : null;
-                    const html = firstPost?.cooked || '';
+                    const html = json.post_stream?.posts?.[0]?.cooked || '';
 
-                    if (html) {
-                        // 改进的图片提取正则，支持更多格式
-                        const imgRegex = /<img[^>]+src=["']([^"']+)["'][^>]*>/gi;
-                        let match;
-                        const seenUrls = new Set(); // 去重
+                    // 使用 DOM 解析来更精确地过滤图片
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = html;
 
-                        while ((match = imgRegex.exec(html)) !== null) {
-                            let src = match[1];
+                    // 移除不需要的内容区域
+                    // 1. 移除 onebox（链接预览）中的所有图片
+                    tempDiv.querySelectorAll('.onebox, .onebox-body, aside.onebox').forEach(el => el.remove());
+                    // 2. 移除 spoiler（遮挡内容）中的所有图片
+                    tempDiv.querySelectorAll('.spoiler, .spoiled, .spoiler-blurred, [data-spoiler-state]').forEach(el => el.remove());
+                    // 3. 移除引用区域
+                    tempDiv.querySelectorAll('.quote, blockquote').forEach(el => el.remove());
 
-                            // 跳过表情、头像等系统图片
-                            if (/emoji|avatar|letter_avatar|user_avatar|favicon|badge|logo/i.test(src)) {
-                                continue;
+                    // 获取剩余的图片
+                    const imgs = tempDiv.querySelectorAll('img');
+                    imgs.forEach(img => {
+                        const src = img.getAttribute('src') || '';
+                        // 过滤 emoji、头像、favicon 等非内容图片
+                        if (src && !/emoji|avatar|letter_avatar|user_avatar|favicon|icon|logo|badge/i.test(src)) {
+                            // 检查图片是否有合理的尺寸属性（排除小图标）
+                            const width = parseInt(img.getAttribute('width') || '0');
+                            const height = parseInt(img.getAttribute('height') || '0');
+                            // 如果有尺寸且太小（小于50px），跳过
+                            if ((width > 0 && width < 50) || (height > 0 && height < 50)) {
+                                return;
                             }
-
-                            // 规范化 URL
-                            if (src.startsWith('//')) {
-                                src = location.protocol + src;
-                            } else if (src.startsWith('/')) {
-                                src = location.origin + src;
-                            }
-
-                            // 去重
-                            if (seenUrls.has(src)) continue;
-                            seenUrls.add(src);
-
-                            // 尝试获取优化后的图片 URL（较小尺寸）
-                            const optimizedSrc = src.replace(/\/original\//, '/optimized/');
-
-                            data.images.push(optimizedSrc !== src ? optimizedSrc : src);
-                            if (data.images.length >= 6) break;
+                            const fullSrc = src.startsWith('/') ? location.origin + src : src;
+                            data.images.push(fullSrc);
+                            if (data.images.length >= 6) return;
                         }
-                    }
+                    });
 
                     this.cache.set(tid, data);
-                } catch (err) {
-                    // 仅在非预期错误时记录
-                    if (err.name !== 'AbortError') {
-                        console.warn('[XHS] Failed to load topic data:', tid, err.message);
-                    }
+                } catch {
                     return;
                 }
             }
-
-            // 检查帖子是否已被删除
-            if (data.notFound) return;
-
-            // 再次检查卡片是否仍在 DOM 中
-            if (!card.isConnected) return;
 
             if (data.images.length) {
                 const bgEl = card.querySelector('.xhs-card-bg');
@@ -1873,49 +1979,26 @@
                 if (bgEl && imgBox && img) {
                     // 预加载图片
                     const tempImg = new Image();
-
-                    // 设置加载超时
-                    const imgTimeout = setTimeout(() => {
-                        tempImg.src = ''; // 取消加载
-                    }, 10000);
-
                     tempImg.onload = () => {
-                        clearTimeout(imgTimeout);
-                        // 检查卡片是否仍在
-                        if (!card.isConnected) return;
-
                         // 使用 RAF 确保平滑过渡
                         requestAnimationFrame(() => {
                             img.src = data.images[0];
+                            // 等待图片实际渲染后再切换
                             img.onload = () => {
-                                if (!card.isConnected) return;
                                 bgEl.style.cssText = 'display:none!important';
                                 imgBox.style.cssText = 'display:block';
+                                // 双重 RAF 确保渲染完成
                                 requestAnimationFrame(() => {
                                     requestAnimationFrame(() => {
                                         img.classList.add('show');
                                     });
                                 });
                             };
-                            img.onerror = () => {
-                                // 图片加载失败时尝试原始 URL
-                                if (data.images[0].includes('/optimized/')) {
-                                    img.src = data.images[0].replace('/optimized/', '/original/');
-                                }
-                            };
                         });
                     };
-
                     tempImg.onerror = () => {
-                        clearTimeout(imgTimeout);
-                        // 尝试原始 URL
-                        if (data.images[0].includes('/optimized/')) {
-                            const originalUrl = data.images[0].replace('/optimized/', '/original/');
-                            data.images[0] = originalUrl;
-                            tempImg.src = originalUrl;
-                        }
+                        // 图片加载失败，保持文字封面
                     };
-
                     tempImg.src = data.images[0];
                 }
 
@@ -1929,7 +2012,7 @@
             }
 
             // 更新点赞数和状态
-            if (data.likes > 0) {
+            if (data.likes) {
                 const likeEl = card.querySelector('.xhs-card-like span:last-child');
                 if (likeEl) likeEl.textContent = Utils.formatNumber(data.likes);
             }
@@ -1958,6 +2041,22 @@
             Grid.init();
             this.apply();
             this._watch();
+            this._watchSystemTheme();
+        },
+
+        // 监听系统主题变化
+        _watchSystemTheme() {
+            const mq = window.matchMedia?.('(prefers-color-scheme: dark)');
+            if (mq) {
+                mq.addEventListener('change', () => {
+                    // 仅在 auto 模式下响应系统变化
+                    if (Config.get().darkMode === 'auto' && Config.get().enabled) {
+                        Styles.injectTheme();
+                        Grid.reset();
+                        Grid.render();
+                    }
+                });
+            }
         },
 
         apply() {
