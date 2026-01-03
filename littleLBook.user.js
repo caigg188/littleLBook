@@ -878,7 +878,7 @@
                     --d-nav-underline-height: 0 !important;
                     --d-nav-border-color--active: transparent !important;
                 }
-                
+
                 /* 导航标签 - 加强选择器 */
                 body.xhs-on ul.nav.nav-pills li a,
                 body.xhs-on ul#navigation-bar.nav-pills li a,
@@ -954,7 +954,7 @@
                     opacity: 0 !important;
                     visibility: hidden !important;
                 }
-                
+
                 /* 强制移除 li 元素上的可能下划线 */
                 body.xhs-on ul.nav.nav-pills li,
                 body.xhs-on ul.nav.nav-pills li.active,
@@ -1089,9 +1089,37 @@
 
                 .xhs-card-bg.size-normal { min-height: 180px; }
                 .xhs-card-bg.size-tall { min-height: 240px; }
+
+                .grid-mode .xhs-card-bg.size-normal,
+                .grid-mode .xhs-card-bg.size-tall {
+                    height: 180px !important;
+                    box-sizing: border-box !important;
+                    display: flex !important;
+                    flex-direction: column !important;
+                }
+
                 @media (max-width: 520px) {
                     .xhs-card-bg.size-normal { min-height: 150px; }
                     .xhs-card-bg.size-tall { min-height: 200px; }
+
+                    .grid-mode .xhs-card-bg.size-normal,
+                    .grid-mode .xhs-card-bg.size-tall { height: 150px !important; }
+                }
+
+                .xhs-card-body {
+                    flex: 1 !important;
+                    display: flex !important;
+                    flex-direction: column !important;
+                }
+
+                .xhs-card-meta {
+                    margin-top: auto !important;
+                }
+
+                .xhs-card-excerpt {
+                    flex: 1 !important;
+                    display: flex !important;
+                    flex-direction: column !important;
                 }
 
                 /* 手绘装饰 */
@@ -1293,11 +1321,11 @@
                     background: ${isDark ? '#3d3d3d' : '#f0f0f0'};
                 }
 
-                .xhs-card-img-box.size-normal { height: 180px; }
-                .xhs-card-img-box.size-tall { height: 240px; }
+                .xhs-card-img-box.size-normal,
+                .xhs-card-img-box.size-tall { height: 180px; }
                 @media (max-width: 520px) {
-                    .xhs-card-img-box.size-normal { height: 150px; }
-                    .xhs-card-img-box.size-tall { height: 200px; }
+                    .xhs-card-img-box.size-normal,
+                    .xhs-card-img-box.size-tall { height: 150px; }
                 }
 
                 .xhs-card-img {
@@ -1670,6 +1698,165 @@
                     -webkit-line-clamp: 3 !important;
                 }
 
+                /* ===== 帖子详情页 ===== */
+                body.xhs-on.xhs-topic { background: var(--xhs-bg) !important; }
+
+                body.xhs-on.xhs-topic .topic-post {
+                    background: var(--xhs-card-bg) !important;
+                    border-radius: 20px !important;
+                    margin-bottom: 16px !important;
+                    box-shadow: 0 2px 12px var(--xhs-shadow) !important;
+                    overflow: hidden !important;
+                    border: none !important;
+                }
+
+                body.xhs-on.xhs-topic .topic-post:first-child {
+                    border-top: 3px solid var(--xhs-c) !important;
+                }
+
+                body.xhs-on.xhs-topic .topic-post article.boxed {
+                    display: flex !important;
+                    flex-direction: row !important;
+                    width: 100% !important;
+                    box-sizing: border-box !important;
+                }
+                body.xhs-on.xhs-topic .topic-post article.boxed > .row {
+                    width: 100% !important;
+                    max-width: 100% !important;
+                    margin: 0 !important;
+                    box-sizing: border-box !important;
+                    display: flex !important;
+                }
+                body.xhs-on.xhs-topic .topic-avatar {
+                    order: -1 !important;
+                    flex-shrink: 0 !important;
+                    padding: 20px 0 20px 20px !important;
+                }
+                body.xhs-on.xhs-topic .topic-body {
+                    flex: 1 !important;
+                    min-width: 0 !important;
+                    padding: 20px !important;
+                    overflow-wrap: break-word !important;
+                    word-wrap: break-word !important;
+                }
+                body.xhs-on.xhs-topic .topic-avatar .avatar {
+                    width: 48px !important;
+                    height: 48px !important;
+                    border: 3px solid var(--xhs-light) !important;
+                    border-radius: 50% !important;
+                    box-shadow: 0 2px 8px rgba(var(--xhs-rgb), 0.15) !important;
+                }
+
+                /* 帖子详情页响应式布局 */
+                body.xhs-on.xhs-topic .post-stream,
+                body.xhs-on.xhs-topic .topic-post,
+                body.xhs-on.xhs-topic article.boxed,
+                body.xhs-on.xhs-topic .posts-wrapper {
+                    max-width: 100% !important;
+                    min-width: 0 !important;
+                    box-sizing: border-box !important;
+                }
+                /* 确保帖子统计信息在底部显示 */
+                body.xhs-on.xhs-topic .topic-map {
+                    width: 100% !important;
+                    max-width: 100% !important;
+                }
+                body.xhs-on.xhs-topic #main-outlet {
+                    box-sizing: border-box !important;
+                    max-width: 100% !important;
+                }
+                body.xhs-on.xhs-topic .topic-post {
+                    overflow: hidden !important;
+                }
+                body.xhs-on.xhs-topic .cooked {
+                    max-width: 100% !important;
+                    overflow-wrap: break-word !important;
+                    word-wrap: break-word !important;
+                }
+                body.xhs-on.xhs-topic .cooked img:not(.emoji):not(.avatar) {
+                    max-width: 100% !important;
+                    height: auto !important;
+                }
+                body.xhs-on.xhs-topic .cooked pre {
+                    max-width: 100% !important;
+                    overflow-x: auto !important;
+                }
+
+                @media (max-width: 900px) {
+                    body.xhs-on.xhs-topic .topic-post article.boxed {
+                        flex-direction: column !important;
+                    }
+                    body.xhs-on.xhs-topic .topic-avatar {
+                        padding: 16px 16px 0 16px !important;
+                    }
+                    body.xhs-on.xhs-topic .topic-body {
+                        padding: 16px !important;
+                    }
+                    body.xhs-on.xhs-topic .topic-avatar .avatar {
+                        width: 40px !important;
+                        height: 40px !important;
+                    }
+                    body.xhs-on.xhs-topic #main-outlet {
+                        padding-left: 8px !important;
+                        padding-right: 8px !important;
+                    }
+                }
+
+                body.xhs-on.xhs-topic .names .username a {
+                    font-weight: 600 !important;
+                    font-size: 15px !important;
+                }
+                body.xhs-on.xhs-topic .names .username a:hover { color: var(--xhs-c) !important; }
+
+                body.xhs-on.xhs-topic .cooked {
+                    font-size: 15px !important;
+                    line-height: 1.8 !important;
+                }
+
+                body.xhs-on.xhs-topic .cooked a { color: var(--xhs-c) !important; }
+                body.xhs-on.xhs-topic .cooked img:not(.emoji):not(.avatar) {
+                    border-radius: 12px !important;
+                    margin: 12px 0 !important;
+                }
+                body.xhs-on.xhs-topic .cooked blockquote {
+                    border-left: 4px solid var(--xhs-c) !important;
+                    background: var(--xhs-light) !important;
+                    border-radius: 0 12px 12px 0 !important;
+                    padding: 16px 20px !important;
+                    margin: 16px 0 !important;
+                }
+                body.xhs-on.xhs-topic .cooked pre { border-radius: 12px !important; }
+                body.xhs-on.xhs-topic .cooked code:not(pre code) {
+                    background: var(--xhs-light) !important;
+                    color: var(--xhs-c) !important;
+                    padding: 2px 8px !important;
+                    border-radius: 6px !important;
+                }
+                body.xhs-on.xhs-topic .post-controls .btn {
+                    border-radius: 8px !important;
+                }
+                body.xhs-on.xhs-topic .post-controls .btn:hover {
+                    background: var(--xhs-light) !important;
+                    color: var(--xhs-c) !important;
+                }
+                body.xhs-on.xhs-topic .like-button.has-like,
+                body.xhs-on.xhs-topic .like-button.has-like .d-icon {
+                    color: var(--xhs-c) !important;
+                }
+
+                body.xhs-on #reply-control {
+                    border-top: 3px solid var(--xhs-c) !important;
+                    border-radius: 20px 20px 0 0 !important;
+                    background: var(--xhs-card-bg) !important;
+                    width: 100% !important;
+                    left: 0 !important;
+                    right: 0 !important;
+                }
+                /* 隐藏未激活的回复控件 */
+                body.xhs-on #reply-control.closed {
+                    display: none !important;
+                }
+
                 /* ===== 话题底部按钮小红书风格 ===== */
                 body.xhs-on.xhs-topic .topic-footer-main-buttons {
                     background: var(--xhs-card-bg) !important;
@@ -1759,97 +1946,7 @@
                     border-bottom-style: solid !important;
                 }
 
-                /* ===== 深色模式全局通知适配 ===== */
-                body.xhs-on.xhs-dark .global-notice .alert-global-notice {
-                    background: rgba(var(--xhs-rgb), 0.12) !important;
-                    border-color: rgba(var(--xhs-rgb), 0.25) !important;
-                }
-                body.xhs-on.xhs-dark .global-notice .alert-global-notice .text {
-                    color: #e0e0e0 !important;
-                }
-                body.xhs-on.xhs-dark .global-notice .alert-global-notice .text strong {
-                    color: var(--xhs-c) !important;
-                }
-                body.xhs-on.xhs-dark .global-notice .alert-global-notice .text a {
-                    color: var(--xhs-c) !important;
-                }
 
-                /* ===== 帖子详情页分类/标签区域样式（与标题一体，无独立卡片）===== */
-                body.xhs-on.xhs-topic .topic-category.ember-view {
-                    background: transparent !important;
-                    padding: 0 !important;
-                    margin: 0 !important;
-                }
-
-                /* ===== 深色模式标题区域 ===== */
-                body.xhs-on.xhs-dark.xhs-topic .title-wrapper,
-                body.xhs-on.xhs-dark.xhs-topic .title-wrapper h1,
-                body.xhs-on.xhs-dark.xhs-topic .title-wrapper h1 a,
-                body.xhs-on.xhs-dark.xhs-topic .title-wrapper .fancy-title,
-                body.xhs-on.xhs-dark.xhs-topic #topic-title,
-                body.xhs-on.xhs-dark.xhs-topic #topic-title h1,
-                body.xhs-on.xhs-dark.xhs-topic #topic-title h1 a,
-                body.xhs-on.xhs-dark.xhs-topic #topic-title .fancy-title {
-                    color: #e0e0e0 !important;
-                }
-                body.xhs-on.xhs-dark.xhs-topic .title-wrapper h1 a:hover,
-                body.xhs-on.xhs-dark.xhs-topic #topic-title h1 a:hover {
-                    color: var(--xhs-c) !important;
-                }
-                /* 深色模式编辑图标 */
-                body.xhs-on.xhs-dark.xhs-topic .edit-topic,
-                body.xhs-on.xhs-dark.xhs-topic .edit-topic svg {
-                    color: #888888 !important;
-                    fill: #888888 !important;
-                }
-                body.xhs-on.xhs-dark.xhs-topic .edit-topic:hover,
-                body.xhs-on.xhs-dark.xhs-topic .edit-topic:hover svg {
-                    color: var(--xhs-c) !important;
-                    fill: var(--xhs-c) !important;
-                }
-
-                /* 深色模式分类区域文字 */
-                body.xhs-on.xhs-dark.xhs-topic .topic-category,
-                body.xhs-on.xhs-dark.xhs-topic .topic-category *,
-                body.xhs-on.xhs-dark.xhs-topic .topic-category .badge-category__wrapper,
-                body.xhs-on.xhs-dark.xhs-topic .topic-category .badge-category,
-                body.xhs-on.xhs-dark.xhs-topic .topic-category .badge-category__name,
-                body.xhs-on.xhs-dark.xhs-topic .topic-category a {
-                    color: #e0e0e0 !important;
-                }
-                body.xhs-on.xhs-dark.xhs-topic .topic-category .badge-category__wrapper:hover,
-                body.xhs-on.xhs-dark.xhs-topic .topic-category .badge-category:hover,
-                body.xhs-on.xhs-dark.xhs-topic .topic-category a:hover {
-                    color: var(--xhs-c) !important;
-                }
-
-                /* 深色模式标签区域 */
-                body.xhs-on.xhs-dark.xhs-topic .topic-header-extra,
-                body.xhs-on.xhs-dark.xhs-topic .topic-header-extra *,
-                body.xhs-on.xhs-dark.xhs-topic .list-tags,
-                body.xhs-on.xhs-dark.xhs-topic .discourse-tags,
-                body.xhs-on.xhs-dark.xhs-topic .discourse-tags *,
-                body.xhs-on.xhs-dark.xhs-topic .discourse-tag,
-                body.xhs-on.xhs-dark.xhs-topic a.discourse-tag {
-                    color: #aaaaaa !important;
-                }
-                body.xhs-on.xhs-dark.xhs-topic .discourse-tag:hover,
-                body.xhs-on.xhs-dark.xhs-topic a.discourse-tag:hover {
-                    color: var(--xhs-c) !important;
-                }
-                body.xhs-on.xhs-dark.xhs-topic .discourse-tag .tag-icon svg {
-                    opacity: 0.85 !important;
-                }
-                body.xhs-on.xhs-dark.xhs-topic .discourse-tags__tag-separator {
-                    color: #888888 !important;
-                }
-
-                /* 深色模式帖子详情页其他亮色元素适配 */
-                body.xhs-on.xhs-dark.xhs-topic [style*="background-color: var(--primary-very-low)"],
-                body.xhs-on.xhs-dark.xhs-topic [style*="background: var(--primary-very-low)"] {
-                    background-color: #2d2d2d !important;
-                    background: #2d2d2d !important;
-                }
             `;
 
             const style = document.createElement('style');
@@ -2394,7 +2491,7 @@
 
             // 预处理：识别数字+单位组合（如 11点半、20个、100元）
             const processedText = text.replace(/(\d+)([点时分秒个元块万千百十号月日年岁度层楼条篇章节页次遍种类项步招式款台部辆套件把张])/g, '【NUM$1$2NUM】');
-            
+
             // 分词：中文词组 / 英文单词(含数字) / 被标记的数字单位 / 空白 / 标点 / 单个中文字
             const segments = processedText.match(/【NUM[^】]+NUM】|[\u4e00-\u9fa5]{2,}|[a-zA-Z][a-zA-Z0-9]*|[0-9]+|\s+|[^\u4e00-\u9fa5a-zA-Z0-9\s【】]+|[\u4e00-\u9fa5]/g) || [text];
 
@@ -2414,7 +2511,7 @@
 
             const markableIndices = [];
             const importantIndices = [];
-            
+
             cleanSegments.forEach((seg, idx) => {
                 const trimmed = seg.trim();
                 const lower = trimmed.toLowerCase();
@@ -2424,7 +2521,7 @@
                 // 检查原始segment是否为数字单位组合
                 const originalSeg = segments[idx];
                 const isNumUnit = /^【NUM.*NUM】$/.test(originalSeg);
-                
+
                 // 检查是否为重要关键词
                 const isImportant = isNumUnit || importantPatterns.some(p => p.test(trimmed));
                 if (isImportant) {
