@@ -1704,6 +1704,11 @@
                 body.xhs-on.xhs-topic .topic-footer-button span {
                     color: var(--xhs-c) !important;
                 }
+                /* 回复按钮(btn-primary)文字为白色 */
+                body.xhs-on.xhs-topic .topic-footer-button.btn-primary .d-button-label,
+                body.xhs-on.xhs-topic .topic-footer-button.btn-primary span {
+                    color: #fff !important;
+                }
                 body.xhs-on.xhs-topic .topic-footer-button:hover {
                     background: rgba(var(--xhs-rgb), 0.2) !important;
                     transform: translateY(-1px) !important;
