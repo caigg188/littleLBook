@@ -732,6 +732,16 @@
                 }
                 .xhs-select:hover { border-color: var(--xhs-c, #ff2442); }
                 .xhs-select:focus { border-color: var(--xhs-c, #ff2442); box-shadow: 0 0 0 2px var(--xhs-light, rgba(255,36,66,0.1)); }
+                
+                /* 冷却提示动画 */
+                @keyframes xhs-notice-in {
+                    from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+                    to { opacity: 1; transform: translateX(-50%) translateY(0); }
+                }
+                @keyframes xhs-notice-out {
+                    from { opacity: 1; transform: translateX(-50%) translateY(0); }
+                    to { opacity: 0; transform: translateX(-50%) translateY(20px); }
+                }
             `);
         },
 
@@ -1522,12 +1532,49 @@
                 body.xhs-on.xhs-topic .names .username a {
                     font-weight: 600 !important;
                     font-size: 15px !important;
+                    color: var(--xhs-text) !important;
                 }
                 body.xhs-on.xhs-topic .names .username a:hover { color: var(--xhs-c) !important; }
+                
+                /* 深色模式帖子详情页文字颜色修复 */
+                body.xhs-on.xhs-topic .topic-body,
+                body.xhs-on.xhs-topic .topic-body *,
+                body.xhs-on.xhs-topic .names,
+                body.xhs-on.xhs-topic .names span,
+                body.xhs-on.xhs-topic .names a,
+                body.xhs-on.xhs-topic .post-infos,
+                body.xhs-on.xhs-topic .post-date,
+                body.xhs-on.xhs-topic .relative-date,
+                body.xhs-on.xhs-topic .user-title,
+                body.xhs-on.xhs-topic .full-name a,
+                body.xhs-on.xhs-topic .second.username a {
+                    color: var(--xhs-text) !important;
+                }
+                body.xhs-on.xhs-topic .post-infos,
+                body.xhs-on.xhs-topic .post-date,
+                body.xhs-on.xhs-topic .relative-date,
+                body.xhs-on.xhs-topic .user-title {
+                    color: var(--xhs-text-secondary) !important;
+                }
+                body.xhs-on.xhs-topic .post-controls .btn,
+                body.xhs-on.xhs-topic .post-controls .d-icon,
+                body.xhs-on.xhs-topic .post-controls .btn .d-button-label,
+                body.xhs-on.xhs-topic .actions .btn {
+                    color: var(--xhs-text-muted) !important;
+                }
+                body.xhs-on.xhs-topic .post-controls .btn:hover,
+                body.xhs-on.xhs-topic .post-controls .btn:hover .d-icon {
+                    color: var(--xhs-c) !important;
+                }
 
-                body.xhs-on.xhs-topic .cooked {
+                body.xhs-on.xhs-topic .cooked,
+                body.xhs-on.xhs-topic .cooked p,
+                body.xhs-on.xhs-topic .cooked li,
+                body.xhs-on.xhs-topic .cooked span,
+                body.xhs-on.xhs-topic .cooked div {
                     font-size: 15px !important;
                     line-height: 1.8 !important;
+                    color: var(--xhs-text) !important;
                 }
 
                 body.xhs-on.xhs-topic .cooked a { color: var(--xhs-c) !important; }
@@ -1840,6 +1887,15 @@
                     align-items: center !important;
                     gap: 6px !important;
                 }
+                body.xhs-on.xhs-topic .topic-footer-button .d-button-label,
+                body.xhs-on.xhs-topic .topic-footer-button span {
+                    color: var(--xhs-c) !important;
+                }
+                /* 回复按钮(btn-primary)文字为白色 */
+                body.xhs-on.xhs-topic .topic-footer-button.btn-primary .d-button-label,
+                body.xhs-on.xhs-topic .topic-footer-button.btn-primary span {
+                    color: #fff !important;
+                }
                 body.xhs-on.xhs-topic .topic-footer-button:hover {
                     background: rgba(var(--xhs-rgb), 0.2) !important;
                     transform: translateY(-1px) !important;
@@ -1941,7 +1997,7 @@
                     <div class="xhs-panel-title">
                         <span>🍠</span>
                         <span>小L书</span>
-                        <span class="xhs-panel-ver">v2.5</span>
+                        <span class="xhs-panel-ver">v2.6</span>
                     </div>
                     <div class="xhs-panel-close">×</div>
                 </div>
@@ -2110,7 +2166,21 @@
         observer: null,
         loadQueue: [],
         isLoading: false,
-        concurrency: 6,
+        concurrency: 3, // 降低并发数，避免请求过快
+        
+        // 速率限制和退避策略
+        rateLimiter: {
+            requestCount: 0,           // 当前时间窗口内的请求数
+            windowStart: Date.now(),   // 时间窗口开始时间
+            maxRequestsPerWindow: 30,  // 每个时间窗口最大请求数
+            windowDuration: 10000,     // 时间窗口长度（10秒）
+            minInterval: 200,          // 请求最小间隔（毫秒）
+            lastRequestTime: 0,        // 上次请求时间
+            failureCount: 0,           // 连续失败次数
+            cooldownUntil: 0,          // 冷却结束时间
+            baseCooldown: 5000,        // 基础冷却时间（5秒）
+            maxCooldown: 60000,        // 最大冷却时间（60秒）
+        },
 
         styles: ['s1', 's2', 's3', 's4', 's5', 's6', 's7', 's8', 's9', 's10'],
 
@@ -2168,23 +2238,174 @@
             this._processQueue();
         },
 
+        // 检查是否可以发起请求（速率限制）
+        _canRequest() {
+            const now = Date.now();
+            const rl = this.rateLimiter;
+            
+            // 检查是否在冷却期
+            if (now < rl.cooldownUntil) {
+                return false;
+            }
+            
+            // 重置时间窗口
+            if (now - rl.windowStart > rl.windowDuration) {
+                rl.windowStart = now;
+                rl.requestCount = 0;
+            }
+            
+            // 检查时间窗口内的请求数限制
+            if (rl.requestCount >= rl.maxRequestsPerWindow) {
+                return false;
+            }
+            
+            // 检查最小间隔
+            if (now - rl.lastRequestTime < rl.minInterval) {
+                return false;
+            }
+            
+            return true;
+        },
+        
+        // 记录请求
+        _recordRequest() {
+            const now = Date.now();
+            this.rateLimiter.requestCount++;
+            this.rateLimiter.lastRequestTime = now;
+        },
+        
+        // 请求成功，重置失败计数
+        _onRequestSuccess() {
+            this.rateLimiter.failureCount = 0;
+        },
+        
+        // 请求失败，应用退避策略
+        _onRequestFailure(statusCode) {
+            const rl = this.rateLimiter;
+            rl.failureCount++;
+            
+            // 如果是 429 (Too Many Requests) 或 5xx 错误，应用更长的冷却
+            let cooldownMultiplier = 1;
+            if (statusCode === 429) {
+                cooldownMultiplier = 4; // 429 错误冷却时间翻4倍
+            } else if (statusCode >= 500) {
+                cooldownMultiplier = 2; // 5xx 错误冷却时间翻倍
+            }
+            
+            // 指数退避：每次连续失败，冷却时间翻倍
+            const cooldown = Math.min(
+                rl.baseCooldown * Math.pow(2, rl.failureCount - 1) * cooldownMultiplier,
+                rl.maxCooldown
+            );
+            
+            rl.cooldownUntil = Date.now() + cooldown;
+            console.log(`[小L书] 请求失败，进入冷却期 ${cooldown / 1000} 秒`);
+            
+            // 显示冷却提示给用户
+            this._showCooldownNotice(cooldown, statusCode);
+        },
+        
+        // 显示冷却提示给用户
+        _showCooldownNotice(cooldown, statusCode) {
+            // 移除旧的提示
+            const oldNotice = document.querySelector('.xhs-cooldown-notice');
+            if (oldNotice) oldNotice.remove();
+            
+            // 创建提示元素
+            const notice = document.createElement('div');
+            notice.className = 'xhs-cooldown-notice';
+            
+            let message = '图片加载暂停';
+            if (statusCode === 429) {
+                message = '请求过于频繁，暂停加载';
+            } else if (statusCode >= 500) {
+                message = '服务器繁忙，暂停加载';
+            } else if (statusCode === 408) {
+                message = '请求超时，暂停加载';
+            }
+            
+            const seconds = Math.ceil(cooldown / 1000);
+            notice.innerHTML = `
+                <span class="xhs-cooldown-icon">⏸️</span>
+                <span class="xhs-cooldown-text">${message}，${seconds}秒后恢复</span>
+            `;
+            
+            // 添加样式
+            notice.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: linear-gradient(135deg, var(--xhs-c, #ff2442), var(--xhs-lighter, #ff6b81));
+                color: #fff;
+                padding: 12px 24px;
+                border-radius: 24px;
+                font-size: 14px;
+                font-weight: 500;
+                z-index: 99999;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                animation: xhs-notice-in 0.3s ease;
+            `;
+            
+            document.body.appendChild(notice);
+            
+            // 自动移除
+            setTimeout(() => {
+                notice.style.animation = 'xhs-notice-out 0.3s ease forwards';
+                setTimeout(() => notice.remove(), 300);
+            }, Math.min(cooldown, 5000));
+        },
+        
+        // 计算下次可请求的等待时间
+        _getWaitTime() {
+            const now = Date.now();
+            const rl = this.rateLimiter;
+            
+            // 如果在冷却期，返回剩余冷却时间
+            if (now < rl.cooldownUntil) {
+                return rl.cooldownUntil - now;
+            }
+            
+            // 如果达到窗口限制，等待窗口重置
+            if (rl.requestCount >= rl.maxRequestsPerWindow) {
+                return rl.windowStart + rl.windowDuration - now;
+            }
+            
+            // 确保最小间隔
+            const timeSinceLastRequest = now - rl.lastRequestTime;
+            if (timeSinceLastRequest < rl.minInterval) {
+                return rl.minInterval - timeSinceLastRequest;
+            }
+            
+            return 0;
+        },
+
         async _processQueue() {
             if (this.isLoading || this.loadQueue.length === 0) return;
+            
+            // 检查速率限制
+            if (!this._canRequest()) {
+                const waitTime = this._getWaitTime();
+                if (waitTime > 0) {
+                    setTimeout(() => this._processQueue(), waitTime + 50);
+                    return;
+                }
+            }
 
             this.isLoading = true;
-            // 增加并发数，提升加载速度
+            
+            // 批量处理，但受速率限制
             const batch = this.loadQueue.splice(0, this.concurrency);
             await Promise.allSettled(batch.map(({ card, tid }) => this._loadImage(card, tid)));
             this.isLoading = false;
 
             if (this.loadQueue.length > 0) {
-                // 使用requestIdleCallback或立即执行，根据队列长度决定
-                if (this.loadQueue.length > this.concurrency * 2) {
-                    // 队列较长时立即继续处理
-                    queueMicrotask(() => this._processQueue());
-                } else {
-                    Utils.scheduleIdle(() => this._processQueue());
-                }
+                // 添加固定延迟，避免请求过快
+                const delay = this.rateLimiter.failureCount > 0 ? 500 : 150;
+                setTimeout(() => this._processQueue(), delay);
             }
         },
 
@@ -2478,9 +2699,12 @@
             let data = this.cache.get(tid);
 
             if (!data) {
+                // 记录请求（用于速率限制统计）
+                this._recordRequest();
+                
                 try {
                     const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 5000);
+                    const timeoutId = setTimeout(() => controller.abort(), 8000); // 增加超时时间
 
                     const res = await fetch(`/t/topic/${tid}.json`, {
                         signal: controller.signal,
@@ -2489,7 +2713,15 @@
                     });
 
                     clearTimeout(timeoutId);
-                    if (!res.ok) return;
+                    
+                    if (!res.ok) {
+                        // 请求失败，应用退避策略
+                        this._onRequestFailure(res.status);
+                        return;
+                    }
+                    
+                    // 请求成功，重置失败计数
+                    this._onRequestSuccess();
 
                     const json = await res.json();
 
@@ -2533,7 +2765,15 @@
                     });
 
                     this.cache.set(tid, data);
-                } catch {
+                } catch (e) {
+                    // 网络错误或超时，应用退避策略
+                    if (e.name === 'AbortError') {
+                        // 超时，轻微退避
+                        this._onRequestFailure(408);
+                    } else {
+                        // 其他网络错误
+                        this._onRequestFailure(0);
+                    }
                     return;
                 }
             }
