@@ -1,12 +1,12 @@
 // ==UserScript==
 // @name         小L书——LinuxDo仿小红书主题
 // @namespace    http://tampermonkey.net/
-// @version      2.9.2
+// @version      2.9.3
 // @license      MIT
 // @description  将LinuxDo改造成小红书风格瀑布流布局，支持自定义主题色
 // @author       JackyLiii
 // @match        https://linux.do/*
-// @icon         https://linux.do/uploads/default/optimized/3X/9/d/9dd49731091ce8656e94433a26a3ef36062b3994_2_32x32.png
+// @icon         https://raw.githubusercontent.com/caigg188/littleLBook/main/llb_icon.png
 // @updateURL    https://raw.githubusercontent.com/caigg188/littleLBook/main/littleLBook.user.js
 // @downloadURL  https://raw.githubusercontent.com/caigg188/littleLBook/main/littleLBook.user.js
 // @supportURL   https://github.com/caigg188/littleLBook/issues
@@ -2595,7 +2595,7 @@
             const li = document.createElement('li');
             li.innerHTML = `
                 <div class="xhs-btn ${Config.get().enabled ? 'on' : 'off'}" title="小L书设置">
-                    <span style="font-size:20px;line-height:1;">🍠</span>
+                    <img src="https://raw.githubusercontent.com/caigg188/littleLBook/main/llb_icon.png" style="width:20px;height:20px;" alt="小L书">
                 </div>
             `;
             this.btn = li.querySelector('.xhs-btn');
@@ -2618,7 +2618,7 @@
             return `
                 <div class="xhs-panel-header">
                     <div class="xhs-panel-title">
-                        <span>🍠</span>
+                        <img src="https://raw.githubusercontent.com/caigg188/littleLBook/main/llb_icon.png" style="width:20px;height:20px;" alt="">
                         <span>小L书</span>
                         <span class="xhs-panel-ver">v${VERSION}</span>
                     </div>

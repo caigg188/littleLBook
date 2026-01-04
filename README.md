@@ -1,4 +1,4 @@
-# 🍠 小L书 - LinuxDo 小红书风格主题
+# <img src="./llb_icon.png" width="32" height="32" alt="小L书"> 小L书 - LinuxDo 小红书风格主题
 
 <p align="center">
   <img src="https://img.shields.io/badge/version-2.6-ff2442?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0id2hpdGUiIGQ9Ik0xMiAyQzYuNDggMiAyIDYuNDggMiAxMnM0LjQ4IDEwIDEwIDEwIDEwLTQuNDggMTAtMTBTMTcuNTIgMiAxMiAyem0wIDE4Yy00LjQxIDAtOC0zLjU5LTgtOHMzLjU5LTggOC04IDggMy41OSA4IDgtMy41OSA4LTggOHoiLz48L3N2Zz4=" alt="version">
@@ -97,11 +97,11 @@ https://raw.githubusercontent.com/caigg188/littleLBook/main/littleLBook.user.js
 
 ### 打开设置面板
 
-安装后访问 [linux.do](https://linux.do)，点击页面右上角的 🍠 按钮：
+安装后访问 [linux.do](https://linux.do)，点击页面右上角的 <img src="./llb_icon.png" width="16" height="16"> 按钮：
 
 ```
 ┌─────────────────────────────────┐
-│  🍠 小L书                  × │
+│  [图标] 小L书              × │
 ├─────────────────────────────────┤
 │  基础设置                        │
 │  ┌─────────────────────────┐   │
