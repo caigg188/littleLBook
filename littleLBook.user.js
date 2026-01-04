@@ -2595,7 +2595,7 @@
             const li = document.createElement('li');
             li.innerHTML = `
                 <div class="xhs-btn ${Config.get().enabled ? 'on' : 'off'}" title="小L书设置">
-                    <img src="https://raw.githubusercontent.com/caigg188/littleLBook/main/llb_icon.png" style="width:20px;height:20px;" alt="小L书">
+                    <img src="https://raw.githubusercontent.com/caigg188/littleLBook/main/llb_icon.png" style="width:36px;height:36px;border-radius:8px;image-rendering:crisp-edges;" alt="小L书">
                 </div>
             `;
             this.btn = li.querySelector('.xhs-btn');
@@ -2618,7 +2618,7 @@
             return `
                 <div class="xhs-panel-header">
                     <div class="xhs-panel-title">
-                        <img src="https://raw.githubusercontent.com/caigg188/littleLBook/main/llb_icon.png" style="width:20px;height:20px;" alt="">
+                        <img src="https://raw.githubusercontent.com/caigg188/littleLBook/main/llb_icon.png" style="width:32px;height:32px;border-radius:8px;image-rendering:crisp-edges;" alt="">
                         <span>小L书</span>
                         <span class="xhs-panel-ver">v${VERSION}</span>
                     </div>
